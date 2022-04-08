@@ -1,4 +1,4 @@
-﻿namespace YourClientName
+﻿namespace pebbernuts
 
 open ScrabbleUtil
 open ScrabbleUtil.ServerCommunication

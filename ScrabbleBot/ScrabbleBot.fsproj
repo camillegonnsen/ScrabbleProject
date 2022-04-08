@@ -1,8 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <RepositoryUrl>https://github.com/jesper-bengtson/Scrabble-FP2022/</RepositoryUrl>
     <TargetFramework>net6.0</TargetFramework>
-    </PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Company>IT University of Copenhagen</Company>
+    
+    <Version>1.0.0</Version>
+    <PackageId>pebbernuts</PackageId>
+    <AssemblyName>pebbernuts</AssemblyName>
+    <Authors>Kristian Berlin Jensen, Isabella Magnusdóttir, Camille Rottbøll Gonnsen</Authors>
+    <Product>The pebbernut bot</Product>
+    <Description>Scrabble Bot for Functional Programming 2022 Group name: &lt;Pebbernoedder&gt;</Description>
+  </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="MultiSet.fsi" />

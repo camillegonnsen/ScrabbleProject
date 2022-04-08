@@ -31,8 +31,7 @@ let rec lookup (s:string) (D (map,bool)) =
             | Some value -> lookup s.[1..] value
 
 
-let step (c:char) (D(map,bool)) =
-    let value = Map.tryFind c map
-    match value with
-    | None -> false
-    | Some value ->
+let step (c:char) (D(map,_)) =
+    match Map.tryFind c map with
+    | None -> None
+    | Some (D (m', b')) -> Some(b', (D(m',b')))

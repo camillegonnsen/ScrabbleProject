@@ -67,17 +67,27 @@ module Scrabble =
             forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
             let input =  System.Console.ReadLine()
             let move = RegEx.parseMove input
-
+            
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
             send cstream (SMPlay move)
 
             let msg = recv cstream
+            
             debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                let st' = st // This state needs to be updated
+                let tilesToRemove = List.foldBack(fun (x,y) acc -> fst y :: acc ) ms []
+                
+                //tempHand removes the played tiles
+                let tempHand = List.foldBack(fun a -> MultiSet.removeSingle a) tilesToRemove st.hand
+                //Adds newPieces to the hand
+                let newHand = List.foldBack (fun (x,y) -> MultiSet.addSingle x ) newPieces tempHand
+                
+     
+                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand
+                
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)

@@ -78,20 +78,34 @@ module Scrabble =
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                let tilesToRemove = List.foldBack(fun (x,y) acc -> fst y :: acc ) ms []
+
+                let tilesToRemove = List.foldBack(fun (x,y) acc -> fst y :: acc) ms []
+                
+                printfn "------TIMES TO BE REMOVED------"
+                tilesToRemove |> Seq.iter (printfn "New letter: %d")
+                printfn "-------------------------------"
                 
                 //tempHand removes the played tiles
                 let tempHand = List.foldBack(fun a -> MultiSet.removeSingle a) tilesToRemove st.hand
+                     
                 //Adds newPieces to the hand
-                let newHand = List.foldBack (fun (x,y) -> MultiSet.addSingle x ) newPieces tempHand
+                printfn "------INCOMING TILES------"
+                newPieces |> Seq.iter (printfn "New letter: %A")
+                printfn "-------------------------"
                 
-     
+                let newHand = List.foldBack (fun (letter,numOfTimes) -> MultiSet.add letter numOfTimes) newPieces tempHand
+                
                 let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand
                 
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = st // This state needs to be updated
+                //let st' = st // This state needs to be updated
+                (*let tilesToBeRemoved = List.foldBack(fun (x,y) acc -> fst y :: acc) move []
+                
+                let newHand = List.foldBack(fun a -> MultiSet.removeSingle(a st.hand)) tilesToBeRemoved st.hand
+                let st' = mkState ((board st) (dict st) (playerNumber st) ())*)
+                let st' = st
                 aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)

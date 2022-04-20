@@ -5,16 +5,16 @@ type internal Dict = D of (Map<char, Dict> * bool)
 
 let empty = fun() -> D(Map.empty, false)
 
-let rec insert (s:string) (D(c,d)) =
+let rec insert (s:string) (D(map,bool)) =
     match s with
-    | "" -> D(c,true)
+    | "" -> D(map,true)
     | s ->
         let index0 = s.Chars 0
-        let found = Map.tryFind index0 c
+        let found = Map.tryFind index0 map
         match found with
         | None ->
-            let hgf =  insert s.[1..] (empty ())
-            D(Map.add index0 hgf c, d)
+            let nDict =  insert s.[1..] (empty ())
+            D(Map.add index0 nDict map, bool)
 
         | Some (D(map, bool) as mappet)->
             let hgf =  insert s.[1..] mappet

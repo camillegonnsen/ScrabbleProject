@@ -84,7 +84,6 @@ module Scrabble =
                   
                 (*-------------------------Updates the board layout-------------------------*)
                 
-                
                 let newBoardLayout = List.foldBack(fun (a,(_,y)) -> Map.add a (fst y)) ms (State.boardLayout st) 
                  
                 (*-------------------------Updates hand-------------------------*)  

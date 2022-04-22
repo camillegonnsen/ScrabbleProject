@@ -59,8 +59,14 @@ module Scrabble =
     open System.Threading
 
     let playGame cstream pieces (st : State.state) =
-
+        
         let rec aux (st : State.state) =
+            (*let hej =  (Dictionary.step 'A' st.dict)
+            match hej with
+               | Some (b,d) ->  printfn "Dict %A"(Dictionary.step 'A' d)
+               | None -> failwith "hje"
+            *)
+            
             Print.printHand pieces (State.hand st)
 
             // remove the force print when you move on from manual input (or when you have learnt the format)

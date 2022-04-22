@@ -35,7 +35,8 @@ module RegEx =
         hand |>
         MultiSet.fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
 
-module State = 
+module State =
+    open System
     // Make sure to keep your state localised in this module. It makes your life a whole lot easier.
     // Currently, it only keeps track of your hand, your player numer, your board, and your dictionary,
     // but it could, potentially, keep track of other useful
@@ -46,14 +47,16 @@ module State =
         dict          : ScrabbleUtil.Dictionary.Dict
         playerNumber  : uint32
         hand          : MultiSet.MultiSet<uint32>
+        boardLayout   : Map<coord, char>
     }
 
-    let mkState b d pn h = {board = b; dict = d;  playerNumber = pn; hand = h }
+    let mkState b d pn h m = {board = b; dict = d;  playerNumber = pn; hand = h; boardLayout = m}
 
     let board st         = st.board
     let dict st          = st.dict
     let playerNumber st  = st.playerNumber
     let hand st          = st.hand
+    let boardLayout st = st.boardLayout
 
 module Scrabble =
     open System.Threading
@@ -61,12 +64,6 @@ module Scrabble =
     let playGame cstream pieces (st : State.state) =
         
         let rec aux (st : State.state) =
-            (*let hej =  (Dictionary.step 'A' st.dict)
-            match hej with
-               | Some (b,d) ->  printfn "Dict %A"(Dictionary.step 'A' d)
-               | None -> failwith "hje"
-            *)
-            
             Print.printHand pieces (State.hand st)
 
             // remove the force print when you move on from manual input (or when you have learnt the format)
@@ -84,10 +81,16 @@ module Scrabble =
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-
-                let tilesToRemove = List.foldBack(fun (x,y) acc -> fst y :: acc) ms []
+                  
+                (*-------------------------Updates the board layout-------------------------*)
                 
-                printfn "------TIMES TO BE REMOVED------"
+                
+                let newBoardLayout = List.foldBack(fun (a,(_,y)) -> Map.add a (fst y)) ms (State.boardLayout st) 
+                 
+                (*-------------------------Updates hand-------------------------*)  
+                let tilesToRemove = List.foldBack(fun (_,y) acc -> fst y :: acc) ms []
+                
+                printfn "------TILES TO BE REMOVED------"
                 tilesToRemove |> Seq.iter (printfn "New letter: %d")
                 printfn "-------------------------------"
                 
@@ -101,7 +104,7 @@ module Scrabble =
                 
                 let newHand = List.foldBack (fun (letter,numOfTimes) -> MultiSet.add letter numOfTimes) newPieces tempHand
                 
-                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand
+                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand newBoardLayout
                 
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
@@ -148,5 +151,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet)
+        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet Map.empty)
         

@@ -22,8 +22,8 @@ let spawnMultiples name dict bot =
 let main argv =
     ScrabbleUtil.DebugPrint.toggleDebugPrint false // Change to false to supress debug output
 
-    System.Console.BackgroundColor <- System.ConsoleColor.Magenta
-    System.Console.ForegroundColor <- System.ConsoleColor.Black
+    //System.Console.BackgroundColor <- System.ConsoleColor.Magenta
+    //System.Console.ForegroundColor <- System.ConsoleColor.Black
     System.Console.Clear()
 
 
@@ -58,8 +58,8 @@ let main argv =
     let (dictionary, time) =
         time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
 
-    let players    = [("The Pebbernut Bot", dictionary, pebbernuts.Scrabble.startGame)]
-    //let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
+    //let players    = [("The Pebbernut Bot", dictionary, pebbernuts.Scrabble.startGame)]
+    let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
 
 
     do ScrabbleServer.Comm.startGame 

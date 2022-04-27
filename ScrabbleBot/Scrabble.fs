@@ -105,6 +105,8 @@ module Scrabble =
                 
                 let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand newBoardLayout
                 
+                
+                
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)

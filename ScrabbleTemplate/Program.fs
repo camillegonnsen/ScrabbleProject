@@ -39,7 +39,7 @@ let main argv =
 //    let board      = ScrabbleUtil.HoleBoard.holeBoard ()
 //    let board      = ScrabbleUtil.InfiniteHoleBoard.infiniteHoleBoard ()
 
-    let words     = readLines "/Users/isabellaharriesmagnusdottir/Documents/IT-Universitetet/4. Semester/Functional programming/scrabble-project/ScrabbleProject/ScrabbleTemplate/Dictionaries/English.txt"
+    let words     = readLines "C:\Users\mille\OneDrive\Skrivebord\4. Semester\Functional Programming\ScrabbleProject\ScrabbleTemplate\Dictionaries\English.txt"
                     //"/Users/isabellaharriesmagnusdottir/Documents/IT-Universitetet/4. Semester/Functional programming/scrabble-project/ScrabbleProject/ScrabbleTemplate/Dictionaries/English.txt"
                     //"..\ScrabbleTemplate\Dictionaries\English.txt"
     let handSize   = 7u

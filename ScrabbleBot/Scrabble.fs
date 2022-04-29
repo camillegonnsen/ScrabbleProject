@@ -88,7 +88,18 @@ module Scrabble =
          
         ) finalWordsList st.hand
     
+    let findBestPlay words =
+        words |> List.maxBy (fun s -> List.length s)
     
+//    let getStringFromWord (st : State.state) (wordToPlay : (char * coord) list) =
+//        let string = List.foldBack (fun (char, coord) s ->
+//            let charId = Map.findKey char st.tiles
+//            let tile = Map.find charId st.tiles
+//            let x = Set.toList tile
+//            let pointVal = snd x.[0]
+//            fst coord + " " + snd coord + " " + ((string)charId) + ((string)char) + ((string) pointVal)) wordToPlay ""
+//        string
+        
     let playGame cstream pieces (st : State.state) =
         
         let rec aux (st : State.state) =
@@ -96,13 +107,13 @@ module Scrabble =
             
             let words = findWords st (0,0) [] []
             
-            printfn "Vi printer her for real"
-            //printfn "%A" (words.Head)
-            printfn "print slut"
+            let wordToPlay = findBestPlay words
             
+ 
+           
             // remove the force print when you move on from manual input (or when you have learnt the format)
-            forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-            let input =  System.Console.ReadLine()
+            //forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
+            let input = ""//getStringFromWord st wordToPlay
             let move = RegEx.parseMove input
                         
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
@@ -160,33 +171,6 @@ module Scrabble =
 
 
         aux st
-    
-    (*let findWordFromCoord (st: State.state) =
-        let currentPos = (0,0)
-        if Map.isEmpty st.boardLayout
-        then currentPos = (0,0)
-        else 
-        
-    let rec findWord hand dict =
-        match Dictionary.step(MultiSet. dict) with
-        | None -> findWord(MultiSet.removeSingle a hand) dict
-        | Some (b, _) -> []*)
-        
-   
-    (*let rec findWordFromCoord hand board dict boardLayout  = 
-        let currentPos = (0,0)
-        if Map.isEmpty boardLayout then
-            []
-        else
-            []*)
-    
-    (*let rec findWordFromChar char wordList dict =
-        match Dictionary.step char dict with 
-        | None -> wordList (*Hvis den rammer et leaf*)
-        | Some (b, _dict) when b -> List.append char wordList
-        | Some (b, _dict) -> wordList*)
-    
-  
        
     let startGame 
             (boardP : boardProg) 

@@ -24,7 +24,7 @@
     let remove a n (M s) =
         let value = numItems a (M s)
         match value with 
-        | value when value < n -> Map.remove a s |> M
+        | value when value <= n -> Map.remove a s |> M
         | _ -> M(Map.add a (value-n) s)
         
     let removeSingle a ms = remove a 1u ms

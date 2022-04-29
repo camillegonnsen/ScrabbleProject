@@ -48,29 +48,63 @@ module State =
         playerNumber  : uint32
         hand          : MultiSet.MultiSet<uint32>
         boardLayout   : Map<coord, char>
+        tiles         : Map<uint32, tile>
     }
 
-    let mkState b d pn h m = {board = b; dict = d;  playerNumber = pn; hand = h; boardLayout = m}
+    let mkState b d pn h m t = {board = b; dict = d;  playerNumber = pn; hand = h; boardLayout = m; tiles = t}
 
     let board st         = st.board
     let dict st          = st.dict
     let playerNumber st  = st.playerNumber
     let hand st          = st.hand
     let boardLayout st = st.boardLayout
+    let tiles st = st.tiles
 
 module Scrabble =
     open System.Threading
 
+    let compareTwoWords (word1 : 'a list) (word2 : 'a list) =
+        if List.length word1 < List.length word2
+        then word2
+        else word1
+
+    let nextPosition (x,y):coord = 
+        (x+1, y)
+    
+    let rec findWords (st: State.state) (positionToPlay : coord) (finalWordsList : ((char * coord) list) list) (wordSoFar: (char * coord) list) =
+        
+        MultiSet.fold (fun (acc : 'a list) key value ->
+            let (charVal, pointVal) = Map.find key st.tiles |> Set.maxElement
+            
+            match Dictionary.step charVal st.dict with
+            | None -> acc
+            
+            | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
+                let newWordList = ((charVal, positionToPlay)::wordSoFar) :: acc
+                findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((charVal, positionToPlay)::wordSoFar)
+            
+            | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
+                findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((charVal, positionToPlay)::wordSoFar)
+         
+        ) finalWordsList st.hand
+    
+    
     let playGame cstream pieces (st : State.state) =
         
         let rec aux (st : State.state) =
             Print.printHand pieces (State.hand st)
-
+            
+            let words = findWords st (0,0) [] []
+            
+            printfn "Vi printer her for real"
+            //printfn "%A" (words.Head)
+            printfn "print slut"
+            
             // remove the force print when you move on from manual input (or when you have learnt the format)
             forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
             let input =  System.Console.ReadLine()
             let move = RegEx.parseMove input
-            
+                        
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
             send cstream (SMPlay move)
 
@@ -103,8 +137,7 @@ module Scrabble =
                 
                 let newHand = List.foldBack (fun (letter,numOfTimes) -> MultiSet.add letter numOfTimes) newPieces tempHand
                 
-                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand newBoardLayout
-                
+                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand newBoardLayout st.tiles
                 
                 
                 aux st'
@@ -127,7 +160,34 @@ module Scrabble =
 
 
         aux st
-
+    
+    (*let findWordFromCoord (st: State.state) =
+        let currentPos = (0,0)
+        if Map.isEmpty st.boardLayout
+        then currentPos = (0,0)
+        else 
+        
+    let rec findWord hand dict =
+        match Dictionary.step(MultiSet. dict) with
+        | None -> findWord(MultiSet.removeSingle a hand) dict
+        | Some (b, _) -> []*)
+        
+   
+    (*let rec findWordFromCoord hand board dict boardLayout  = 
+        let currentPos = (0,0)
+        if Map.isEmpty boardLayout then
+            []
+        else
+            []*)
+    
+    (*let rec findWordFromChar char wordList dict =
+        match Dictionary.step char dict with 
+        | None -> wordList (*Hvis den rammer et leaf*)
+        | Some (b, _dict) when b -> List.append char wordList
+        | Some (b, _dict) -> wordList*)
+    
+  
+       
     let startGame 
             (boardP : boardProg) 
             (dictf : bool -> Dictionary.Dict) 
@@ -152,5 +212,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet Map.empty)
+        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet Map.empty tiles)
         

@@ -1,4 +1,3 @@
-
 module internal Dictionary
 
 //type internal Dict = D of (Map<char, Dict> * bool)
@@ -33,12 +32,12 @@ let rec insert (word:string)  =
                       
 let rec lookup (word:string) (dict: Dict)  = false
 
-let rec step (c:char) (dict: Dict) =
+let step (c:char) (dict: Dict) =
     match dict with
     | Leaf _ -> None
     | Node (b, dict') ->
-        match dict'.TryGetValue c with
-        | (true, value ) ->
+        match dict'.TryGetValue c with (*true og false er her C#'s forsøg på en option type*)
+        | (true, value) ->
             match value with
             | Leaf b -> Some (b, value)
             | Node (b,_) -> Some(b, value)

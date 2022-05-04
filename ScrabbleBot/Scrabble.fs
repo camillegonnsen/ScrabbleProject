@@ -72,38 +72,30 @@ module Scrabble =
         (x+1, y)
     
     let rec findWords (st: State.state) (positionToPlay : coord) (finalWordsList : ((coord * (uint32 * (char * int))) list) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
-         
-        MultiSet.fold (fun (acc : 'a list) key _ ->
-            if key = 0u then
+        
+        match Map.tryFind positionToPlay st.boardLayout with
+        | None -> 
+        
+        
+            MultiSet.fold (fun (acc : 'a list) key _ ->
+                
                 let wildCard = Map.find key st.tiles
                 
-                Set.fold(fun (acc : 'a list) (charVal, pointVal) ->
+                Set.fold(fun (acc' : 'a list) (charVal, pointVal) ->
                     match Dictionary.step charVal st.dict with
-                    | None -> acc
+                    | None -> acc'
             
                     | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
-                        let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc
+                        let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc'
                         findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
             
                     | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
                         findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
          
-                ) finalWordsList wildCard
+                ) acc wildCard
                 
-            else    
-                let (charVal, pointVal) = Map.find key st.tiles |> Set.maxElement
+            ) finalWordsList st.hand
             
-                match Dictionary.step charVal st.dict with
-                | None -> acc
-            
-                | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
-                    let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc
-                    findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
-            
-                | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
-                    findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
-         
-        ) finalWordsList st.hand
     
     let findBestPlay words =
         words |> List.maxBy (fun s -> List.length s)

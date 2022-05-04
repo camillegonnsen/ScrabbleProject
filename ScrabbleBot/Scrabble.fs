@@ -72,19 +72,36 @@ module Scrabble =
         (x+1, y)
     
     let rec findWords (st: State.state) (positionToPlay : coord) (finalWordsList : ((coord * (uint32 * (char * int))) list) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
-        
-        MultiSet.fold (fun (acc : 'a list) key value ->
-            let (charVal, pointVal) = Map.find key st.tiles |> Set.maxElement
+         
+        MultiSet.fold (fun (acc : 'a list) key _ ->
+            if key = 0u then
+                let wildCard = Map.find key st.tiles
+                
+                Set.fold(fun (acc : 'a list) (charVal, pointVal) ->
+                    match Dictionary.step charVal st.dict with
+                    | None -> acc
             
-            match Dictionary.step charVal st.dict with
-            | None -> acc
+                    | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
+                        let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc
+                        findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
             
-            | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
-                let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc
-                findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
+                    | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
+                        findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
+         
+                ) finalWordsList wildCard
+                
+            else    
+                let (charVal, pointVal) = Map.find key st.tiles |> Set.maxElement
             
-            | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
-                findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
+                match Dictionary.step charVal st.dict with
+                | None -> acc
+            
+                | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
+                    let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc
+                    findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
+            
+                | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
+                    findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
          
         ) finalWordsList st.hand
     
@@ -99,12 +116,7 @@ module Scrabble =
             let words = findWords st (0,0) [] []
             
             let move = findBestPlay words
-            
-            // remove the force print when you move on from manual input (or when you have learnt the format)
-            //forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-            (*let input = ""//getStringFromWord st wordToPlay
-            let move = RegEx.parseMove input*)
-                        
+                         
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
             send cstream (SMPlay move)
 

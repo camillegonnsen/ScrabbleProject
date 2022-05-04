@@ -67,15 +67,40 @@ module Scrabble =
         if List.length word1 < List.length word2
         then word2
         else word1
-
-    let nextPosition (x,y):coord = 
-        (x+1, y)
     
-    let rec findWords (st: State.state) (positionToPlay : coord) (finalWordsList : ((coord * (uint32 * (char * int))) list) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
+    type dir =
+        Right | Down
+    
+    let back ((x,y):coord) dir =
+        match dir with
+        | Right -> (x-1,y)
+        | Down -> (x, y-1)
+    
+    let forward ((x,y):coord) dir =
+        match dir with
+        | Right -> (x+1,y)
+        | Down -> (x, y+1)
+        
+    let findBestWord w1 w2 =
+        if List.length w1 > List.length w2 then w1
+        else w2
+    
+    let canWeBuildWordHere (st: State.state) ((x,y): coord) dir =
+        match dir with
+        | Right ->
+            match Map.tryFind (x-1,y) st.boardLayout with 
+            | None -> true
+            | Some _ -> false
+        | Down ->
+            match Map.tryFind (x, y-1) st.boardLayout with 
+            | None -> true
+            | Some _ -> false
+    
+    let rec findWord (st: State.state) (dir : dir) (positionToPlay : coord) (finalWord : (coord * (uint32 * (char * int))) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
         
         match Map.tryFind positionToPlay st.boardLayout with
-        | None -> 
         
+        | None -> 
         
             MultiSet.fold (fun (acc : 'a list) key _ ->
                 
@@ -86,29 +111,56 @@ module Scrabble =
                     | None -> acc'
             
                     | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)
-                        let newWordList = ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) :: acc'
-                        findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) newWordList ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
+                        let bestWord = findBestWord ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar) acc'
+                        
+                        findWord { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} dir (forward positionToPlay dir) bestWord ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
             
                     | Some(false, nDict) -> (* Hvis den rammer en node, som ikke er et komplet ord *)
-                        findWords { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} (nextPosition positionToPlay) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
+                        findWord { st with hand = MultiSet.removeSingle key st.hand; dict = nDict} dir (forward positionToPlay dir) acc ((positionToPlay, (key, (charVal, pointVal)))::wordSoFar)
          
                 ) acc wildCard
                 
-            ) finalWordsList st.hand
-            
-    
-    let findBestPlay words =
-        words |> List.maxBy (fun s -> List.length s)
+            ) finalWord st.hand
         
+        | Some charVal ->
+            //videre med bestword og ned i dics men charen skal ikke tilføjes til vores accumulator
+            match Dictionary.step charVal st.dict with
+            
+            | None -> finalWord
+            
+            | Some (true, nDict) ->
+                let bestWord = findBestWord wordSoFar finalWord
+                findWord {st with dict = nDict} dir (forward positionToPlay dir) bestWord (wordSoFar)
+                
+            | Some (false, nDict) ->
+                findWord {st with dict = nDict} dir (forward positionToPlay dir) finalWord (wordSoFar)
+                            
+    let findWordDirection (st : State.state) dir =
+        Map.fold(fun (acc : 'a list) (positiontoplay: (coord)) _ ->
+            if canWeBuildWordHere st positiontoplay dir then
+                let wordSoFar = findWord st dir positiontoplay [] []
+                findBestWord wordSoFar acc
+            else
+               acc 
+                
+        ) [] st.boardLayout
+    
+    let findWordOnEntireBoard (st : State.state) =
+        
+        if Map.isEmpty st.boardLayout then
+            findWord st Right (0,0) [] []
+        
+        else
+            //check her om vi skal kører down eller op eller hvordan
+            findBestWord (findWordDirection st Right) (findWordDirection st Down)
+            
     let playGame cstream pieces (st : State.state) =
         
         let rec aux (st : State.state) =
             Print.printHand pieces (State.hand st)
             
-            let words = findWords st (0,0) [] []
+            let move = findWordOnEntireBoard st
             
-            let move = findBestPlay words
-                         
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
             send cstream (SMPlay move)
 

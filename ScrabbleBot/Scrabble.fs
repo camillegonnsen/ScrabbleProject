@@ -100,22 +100,27 @@ module Scrabble =
     let hasAdjacent (st: State.state) ((x,y) : coord) dir  =
         match dir with 
         | Right -> 
-            st.boardLayout.ContainsKey((x,y-1)) || st.boardLayout.ContainsKey((x,y+1))
+            st.boardLayout.ContainsKey((x,y-1)) || st.boardLayout.ContainsKey((x,y+1)) || st.boardLayout.ContainsKey((x+1,y))
         | Down ->
-             st.boardLayout.ContainsKey((x-1,y)) || st.boardLayout.ContainsKey((x+1,y))
+             st.boardLayout.ContainsKey((x-1,y)) || st.boardLayout.ContainsKey((x+1,y)) || st.boardLayout.ContainsKey((x, y+1))
 
 
-    let doesTileHasAdjacent  (coord:coord) (direction: dir) (st: State.state)  =
-        let adjacent = hasAdjacent st
-        adjacent coord direction 
+    (*let doesTileHaveAdjacent  (coord:coord) (direction: dir) (st: State.state)  =
+        let adjacent = hasAdjacent st coord direction
+        adjacent*)
 
-    let rec findValidWord (st:State.state) (coord :coord)   (direction:dir) = 
-        let doesTileHasAdjacentWord = doesTileHasAdjacent  coord direction st
-        if (doesTileHasAdjacentWord) then 
+    (*let rec findValidWord (st:State.state) (coord :coord) (direction:dir) = 
+        let doesTileHaveAdjacentWord = hasAdjacent st coord direction
+        if (doesTileHaveAdjacentWord) then 
             findValidWord st (back coord direction)  direction 
         else 
-        false
+        false*)
 
+    
+    (*let canLetterBePlacedHere (st: State.state) ((x,y): coord) dir =
+        match dir with
+        | Right ->
+            match Map.tryFind (x,y)*)
     
     let rec findWord (st: State.state) (dir : dir) (positionToPlay : coord) (finalWord : (coord * (uint32 * (char * int))) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
         
@@ -126,17 +131,13 @@ module Scrabble =
             MultiSet.fold (fun (acc : 'a list) key _ ->
                 
                 let wildCard = Map.find key st.tiles
-
-                let adjacent = doesTileHasAdjacent positionToPlay dir st
-
-                if adjacent 
-                then []
-
-                else 
                 
                 Set.fold(fun (acc' : 'a list) (charVal, pointVal) ->
-
+                    
                     match Dictionary.step charVal st.dict with
+                    | _ when hasAdjacent st positionToPlay dir ->
+                        acc'
+                    
                     | None -> acc'
             
                     | Some(true, nDict)-> (* Hvis den rammer en node med true, men den stadig skal søge videre *)

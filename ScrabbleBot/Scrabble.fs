@@ -95,6 +95,27 @@ module Scrabble =
             match Map.tryFind (x, y-1) st.boardLayout with 
             | None -> true
             | Some _ -> false
+
+
+    let hasAdjacent (st: State.state) ((x,y) : coord) dir  =
+        match dir with 
+        | Right -> 
+            st.boardLayout.ContainsKey((x,y-1)) || st.boardLayout.ContainsKey((x,y+1))
+        | Down ->
+             st.boardLayout.ContainsKey((x-1,y)) || st.boardLayout.ContainsKey((x+1,y))
+
+
+    let doesTileHasAdjacent  (coord:coord) (direction: dir) (st: State.state)  =
+        let adjacent = hasAdjacent st
+        adjacent coord direction 
+
+    let rec findValidWord (st:State.state) (coord :coord)   (direction:dir) = 
+        let doesTileHasAdjacentWord = doesTileHasAdjacent  coord direction st
+        if (doesTileHasAdjacentWord) then 
+            findValidWord st (back coord direction)  direction 
+        else 
+        false
+
     
     let rec findWord (st: State.state) (dir : dir) (positionToPlay : coord) (finalWord : (coord * (uint32 * (char * int))) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
         
@@ -105,8 +126,16 @@ module Scrabble =
             MultiSet.fold (fun (acc : 'a list) key _ ->
                 
                 let wildCard = Map.find key st.tiles
+
+                let adjacent = doesTileHasAdjacent positionToPlay dir st
+
+                if adjacent 
+                then []
+
+                else 
                 
                 Set.fold(fun (acc' : 'a list) (charVal, pointVal) ->
+
                     match Dictionary.step charVal st.dict with
                     | None -> acc'
             

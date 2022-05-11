@@ -1,9 +1,20 @@
 # ScrabbleProject
 
-Multi-player and dictionary (no)
+**Group Pebbernødderne**
 
-Parsing boards playing on all boards (no)
+**Bot**: The Pebbernut Bot
 
-parallelism (no)
+**Members**:
+- Camille Gonnsen (cgon)
+- Isabella Magnusdottir (imag)
+- Kristian Jensen (krbj)
 
-Respect the timeout flag (no)
+**Requirements**:
+
+Multi-player and dictionary --> no
+
+Parsing boards playing on all boards --> no
+
+Parallelism --> no
+
+Respect the timeout flag --> no

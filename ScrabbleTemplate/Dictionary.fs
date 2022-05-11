@@ -1,6 +1,5 @@
 module internal Dictionary
 
-//type internal Dict = D of (Map<char, Dict> * bool)
 type Dict =
     | Leaf of bool
     | Node of bool * System.Collections.Generic.Dictionary<char, Dict>

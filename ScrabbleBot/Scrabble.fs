@@ -179,17 +179,11 @@ module Scrabble =
             match move with
             | [] ->
                 let listHand = MultiSet.toList st.hand
-                printf "We are going to swap all of our tiles \n"
                 send cstream (SMChange listHand)
 
             | _ ->
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                 send cstream (SMPlay move)
-            
-                            //MultiSet.fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
-
-//            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-//            send cstream (SMPlay move)
 
             let msg = recv cstream
             
@@ -197,10 +191,8 @@ module Scrabble =
 
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
-                (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
                   
                 (*-------------------------Updates the board layout-------------------------*)
-                
                 let newBoardLayout = List.foldBack(fun (a,(_,y)) -> Map.add a (fst y)) ms (State.boardLayout st) 
                  
                 (*-------------------------Updates hand-------------------------*)  
@@ -212,11 +204,9 @@ module Scrabble =
                 tilesToRemove |> Seq.iter (printfn "New letter: %d")
                 printfn "-------------------------------"*)
                 
-                //tempHand removes the played tiles
                 let tempHand = List.foldBack(fun a -> MultiSet.removeSingle a) tilesToRemove st.hand
-                     
-                (*//Adds newPieces to the hand
-                printfn "------INCOMING TILES------"
+                
+                (*printfn "------INCOMING TILES------"
                 newPieces |> Seq.iter (printfn "New letter: %A")
                 printfn "-------------------------"*)
                 
@@ -228,16 +218,12 @@ module Scrabble =
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
-                //let st' = st // This state needs to be updated
-                (*let tilesToBeRemoved = List.foldBack(fun (x,y) acc -> fst y :: acc) move []
-                
-                let newHand = List.foldBack(fun a -> MultiSet.removeSingle(a st.hand)) tilesToBeRemoved st.hand
-                let st' = mkState ((board st) (dict st) (playerNumber st) ())*)
+ 
                 let st' = st
                 aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
-                let st' = st // This state needs to be updated
+                let st' = st
                 aux st'
             | RCM (CMGameOver _) -> ()
             | RCM (CMChangeSuccess newTiles) ->
@@ -245,7 +231,7 @@ module Scrabble =
                 
                 let st' = State. mkState (State.board st) (State.dict st) (State.playerNumber st) newHand st.boardLayout st.tiles st.tilesLeft
                 aux st'
-                //fjern lortet fra hånden
+                
             | RCM a -> failwith (sprintf "not implmented: %A" a)
             | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st
 

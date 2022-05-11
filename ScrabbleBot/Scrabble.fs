@@ -49,9 +49,10 @@ module State =
         hand          : MultiSet.MultiSet<uint32>
         boardLayout   : Map<coord, char>
         tiles         : Map<uint32, tile>
+        tilesLeft     : uint32
     }
 
-    let mkState b d pn h m t = {board = b; dict = d;  playerNumber = pn; hand = h; boardLayout = m; tiles = t}
+    let mkState b d pn h m t tl = {board = b; dict = d;  playerNumber = pn; hand = h; boardLayout = m; tiles = t; tilesLeft = tl}
 
     let board st         = st.board
     let dict st          = st.dict
@@ -59,6 +60,7 @@ module State =
     let hand st          = st.hand
     let boardLayout st = st.boardLayout
     let tiles st = st.tiles
+    let tilesLeft st = st.tilesLeft
 
 module Scrabble =
     open System.Threading
@@ -104,23 +106,6 @@ module Scrabble =
         | Down ->
              st.boardLayout.ContainsKey((x-1,y)) || st.boardLayout.ContainsKey((x+1,y)) || st.boardLayout.ContainsKey((x, y+1))
 
-
-    (*let doesTileHaveAdjacent  (coord:coord) (direction: dir) (st: State.state)  =
-        let adjacent = hasAdjacent st coord direction
-        adjacent*)
-
-    (*let rec findValidWord (st:State.state) (coord :coord) (direction:dir) = 
-        let doesTileHaveAdjacentWord = hasAdjacent st coord direction
-        if (doesTileHaveAdjacentWord) then 
-            findValidWord st (back coord direction)  direction 
-        else 
-        false*)
-
-    
-    (*let canLetterBePlacedHere (st: State.state) ((x,y): coord) dir =
-        match dir with
-        | Right ->
-            match Map.tryFind (x,y)*)
     
     let rec findWord (st: State.state) (dir : dir) (positionToPlay : coord) (finalWord : (coord * (uint32 * (char * int))) list) (wordSoFar: (coord * (uint32 * (char * int))) list) =
         
@@ -191,8 +176,20 @@ module Scrabble =
             
             let move = findWordOnEntireBoard st
             
-            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-            send cstream (SMPlay move)
+            match move with
+            | [] ->
+                let listHand = MultiSet.toList st.hand
+                printf "We are going to swap all of our tiles \n"
+                send cstream (SMChange listHand)
+
+            | _ ->
+                debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+                send cstream (SMPlay move)
+            
+                            //MultiSet.fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
+
+//            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+//            send cstream (SMPlay move)
 
             let msg = recv cstream
             
@@ -209,21 +206,23 @@ module Scrabble =
                 (*-------------------------Updates hand-------------------------*)  
                 let tilesToRemove = List.foldBack(fun (_,y) acc -> fst y :: acc) ms []
                 
-                printfn "------TILES TO BE REMOVED------"
+                let upTilesLeft = st.tilesLeft - uint32(List.length tilesToRemove)
+                
+                (*printfn "------TILES TO BE REMOVED------"
                 tilesToRemove |> Seq.iter (printfn "New letter: %d")
-                printfn "-------------------------------"
+                printfn "-------------------------------"*)
                 
                 //tempHand removes the played tiles
                 let tempHand = List.foldBack(fun a -> MultiSet.removeSingle a) tilesToRemove st.hand
                      
-                //Adds newPieces to the hand
+                (*//Adds newPieces to the hand
                 printfn "------INCOMING TILES------"
                 newPieces |> Seq.iter (printfn "New letter: %A")
-                printfn "-------------------------"
+                printfn "-------------------------"*)
                 
                 let newHand = List.foldBack (fun (letter,numOfTimes) -> MultiSet.add letter numOfTimes) newPieces tempHand
                 
-                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand newBoardLayout st.tiles
+                let st' = State.mkState (State.board st) (State.dict st) (State.playerNumber st) newHand newBoardLayout st.tiles upTilesLeft
                 
                 
                 aux st'
@@ -241,6 +240,12 @@ module Scrabble =
                 let st' = st // This state needs to be updated
                 aux st'
             | RCM (CMGameOver _) -> ()
+            | RCM (CMChangeSuccess newTiles) ->
+                let newHand = List.fold(fun acc (id, numOfTimes) -> MultiSet.add id numOfTimes acc) MultiSet.empty newTiles
+                
+                let st' = State. mkState (State.board st) (State.dict st) (State.playerNumber st) newHand st.boardLayout st.tiles st.tilesLeft
+                aux st'
+                //fjern lortet fra hånden
             | RCM a -> failwith (sprintf "not implmented: %A" a)
             | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st
 
@@ -271,5 +276,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet Map.empty tiles)
+        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet Map.empty tiles 100u)
         

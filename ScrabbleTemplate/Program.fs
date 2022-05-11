@@ -22,14 +22,14 @@ let spawnMultiples name dict bot =
 let main argv =
     ScrabbleUtil.DebugPrint.toggleDebugPrint false // Change to false to supress debug output
     
-    System.Console.BackgroundColor <- System.ConsoleColor.White
+    //System.Console.BackgroundColor <- System.ConsoleColor.Magenta
     //System.Console.ForegroundColor <- System.ConsoleColor.Black
 
     System.Console.Clear()
 
 
-    let board        = ScrabbleUtil.StandardBoard.standardBoard ()
-//    let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
+//    let board        = ScrabbleUtil.StandardBoard.standardBoard ()
+    let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
 
 //    let board      = ScrabbleUtil.RandomBoard.randomBoard ()
 //    let board      = ScrabbleUtil.RandomBoard.randomBoardSeed (Some 42)
@@ -39,9 +39,12 @@ let main argv =
 //    let board      = ScrabbleUtil.HoleBoard.holeBoard ()
 //    let board      = ScrabbleUtil.InfiniteHoleBoard.infiniteHoleBoard ()
 
-    let words     = readLines "C:\Users\krist\OneDrive - ITU\Desktop\Fjerde semester\F#\SrabbleProject\ScrabbleProject\ScrabbleTemplate\Dictionaries\English.txt"
+    let words     = readLines "/Users/isabellaharriesmagnusdottir/Documents/IT-Universitetet/4. Semester/Functional programming/scrabble-project/ScrabbleProject/ScrabbleTemplate/Dictionaries/English.txt"
+
+                    //"C:\Users\mille\OneDrive\Skrivebord\4. Semester\Functional Programming\ScrabbleProject\ScrabbleTemplate\Dictionaries\English.txt"
                     //"/Users/isabellaharriesmagnusdottir/Documents/IT-Universitetet/4. Semester/Functional programming/scrabble-project/ScrabbleProject/ScrabbleTemplate/Dictionaries/English.txt"
                     //"..\ScrabbleTemplate\Dictionaries\English.txt"
+    
     let handSize   = 7u
     let timeout    = None
     let tiles      = ScrabbleUtil.English.tiles 1u

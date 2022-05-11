@@ -6,7 +6,7 @@
     
     let isEmpty (M s) = Map.isEmpty s
     
-    let size (M s) = Map.fold(fun (acc) _ v -> acc + v) 0u s
+    let size (M s) = Map.fold(fun acc _ v -> acc + v) 0u s
     
     let contains a (M s)  = Map.containsKey a s
     
@@ -32,3 +32,12 @@
     let fold f a (M s) = Map.fold(f) a s
     
     let foldBack f (M s) a = Map.foldBack(f) s a
+    
+    let rec tupleToList (x,y) lst =
+        match y with
+        | 0u -> lst
+        | _ -> tupleToList (x, y - 1u) (x :: lst)
+    
+    let toList (M ms) =
+        let newLst = Map.toList ms
+        List.fold (fun acc (x,y)  -> tupleToList (x,y) [] @ acc) [] newLst
